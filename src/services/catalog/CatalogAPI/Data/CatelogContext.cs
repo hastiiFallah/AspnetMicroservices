@@ -3,9 +3,9 @@ using MongoDB.Driver;
 
 namespace CatalogAPI.Data
 {
-    public class CategoryContext : ICategoryContext
+    public class CatelogContext : ICatelogContext
     {
-        public CategoryContext(IConfiguration configuration)
+        public CatelogContext(IConfiguration configuration)
         {
             var client = new MongoClient(configuration.GetValue<string>("DataBaseSettings:ConnectionString"));
             var database = client.GetDatabase(configuration.GetValue<string>("DataBaseSettings:DataBaseName"));
