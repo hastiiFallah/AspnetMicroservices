@@ -22,6 +22,10 @@ namespace CatalogAPI.Controllers
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
             var products = await _catelog.GetProducts();
+            if(products == null)
+            {
+                return BadRequest();
+            }
             return Ok(products);
         }
 
@@ -43,6 +47,10 @@ namespace CatalogAPI.Controllers
         public async Task<ActionResult<IEnumerable<Product>>> GetProductByCategory(string category)
         {
             var products = await _catelog.GetCategoryByName(category);
+            if(category == null)
+            {
+                return NotFound("Not Found");
+            }
             return Ok(products);
         }
 
@@ -63,7 +71,12 @@ namespace CatalogAPI.Controllers
         [HttpDelete("{id:length(24)}", Name = "DeleteProduct")]
         public async Task<IActionResult> DeleteProductById(string id)
         {
-            return Ok(await _catelog.DeleteProduct(id));
+            var deletedproduct = await _catelog.DeleteProduct(id);
+            if(deletedproduct == null)
+            {
+                return NotFound("Not Found");
+            }
+            return Ok("Product Deleted");
         }
     }
 }
