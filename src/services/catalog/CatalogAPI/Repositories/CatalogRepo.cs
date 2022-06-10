@@ -8,13 +8,10 @@ namespace CatalogAPI.Repositories
     public class CatalogRepo : ICatalogRepo
     {
         private readonly ICatelogContext _context;
-        private readonly IMemoryCache _cache;
-        private const string chacheName = "Catelogdb";
 
-        public CatalogRepo(ICatelogContext context,IMemoryCache cache)
+        public CatalogRepo(ICatelogContext context)
         {
             _context = context;
-            _cache = cache;
         }
         public async Task CreateProduct(Product product)
         { 
@@ -67,14 +64,11 @@ namespace CatalogAPI.Repositories
 
         public async Task<IEnumerable<Product>> GetProducts()
         {
-            var output =  _cache.Get<IEnumerable<Product>>(chacheName);
-            if (output == null)
-            {
-                return await _context.Products.Find(_ => true).ToListAsync();
-                _cache.Set(chacheName, output);
-            }
-            return output;
-            
+            return await _context
+                        .Products
+                        .Find(p => true)
+                        .ToListAsync();
+
         }
 
         public async Task<bool> UpdateProduct(Product product)
