@@ -184,3 +184,18 @@ services:
         - elasticsearch
     ports:
         - "5601:5601"
+
+  blazorapp1:
+    container_name: blazorapp1
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - "ApiSettings:GatewayAddress=http://ocelotapigw"
+    depends_on:
+      - ocelotapigw
+      - catalogapi
+      - basketapi
+      - orderingapi
+      - discountapi
+    ports:
+      - "8007:80"
+

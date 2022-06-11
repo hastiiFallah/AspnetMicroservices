@@ -76,6 +76,12 @@ services:
   kibana:
    image: docker.elastic.co/kibana/kibana:8.2.2
 
+  blazorapp1:
+    image: ${DOCKER_REGISTRY-}blazorapp1
+    build:
+      context: .
+      dockerfile: BlazorApp/BlazorApp1/Dockerfile
+
 volumes:
   mongo_data:
   portainer_data:
@@ -83,6 +89,8 @@ volumes:
   pgadmin_data:
   elastiksearch_data:
           
+
+
 
 
 
