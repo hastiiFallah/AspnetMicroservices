@@ -1,5 +1,5 @@
 
-using AspnetRunBasics.Services;
+using AspnetRunBasicBlazor.Services;
 using CommonLogging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -23,7 +23,7 @@ namespace AspnetRunBasics
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<LoggingDelegatingHandler>();
-            services.AddHttpClient<ICatelogService, CatalogService>(c =>
+            services.AddHttpClient<ICatalogService, CatalogService>(c =>
             c.BaseAddress = new Uri(Configuration["ApiSettings:GateWayAddress"]))
                 .AddHttpMessageHandler<LoggingDelegatingHandler>();
 
