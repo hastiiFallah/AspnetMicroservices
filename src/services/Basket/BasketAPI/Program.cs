@@ -1,11 +1,12 @@
 using BasketAPI.gRPC_Services;
 using BasketAPI.Rrpo;
+using CommonLogging;
 using DiscountGrpc.Protos;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
+Host.CreateDefaultBuilder(args).UseSerilog(Serilogger.Configure);
 // Add services to the container.
 var configuration = builder.Configuration;
 builder.Services.AddControllers();

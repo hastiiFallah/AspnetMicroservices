@@ -1,4 +1,6 @@
+using CommonLogging;
 using DiscountAPI.Extensions;
+using Serilog;
 
 namespace WebApplication1
 {
@@ -14,6 +16,7 @@ namespace WebApplication1
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+            .UseSerilog(Serilogger.Configure)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

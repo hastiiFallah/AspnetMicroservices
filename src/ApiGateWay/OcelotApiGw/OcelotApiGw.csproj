@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\CommonLogging\CommonLogging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="ocelot.Development.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

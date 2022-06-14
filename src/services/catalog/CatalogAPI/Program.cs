@@ -1,8 +1,11 @@
 using CatalogAPI.Data;
 using CatalogAPI.Repositories;
+using CommonLogging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
+Host.CreateDefaultBuilder(args)
+    .UseSerilog(Serilogger.Configure);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
