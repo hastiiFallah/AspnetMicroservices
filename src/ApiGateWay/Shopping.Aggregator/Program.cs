@@ -1,6 +1,7 @@
 using CommonLogging;
 using Serilog;
 using Shopping.Aggregator.Services;
+using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 Host.CreateDefaultBuilder(args)
@@ -13,7 +14,9 @@ builder.Services.AddTransient<LoggingDelegatingHandler>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddHttpClient<IBasketService, BasketService>(c =>
 c.BaseAddress = new Uri(builder.Configuration["ApiSettings:BasketUrl"]))
-    .AddHttpMessageHandler<LoggingDelegatingHandler>();
+    .AddHttpMessageHandler<LoggingDelegatingHandler>()
+    .AddTransientHttpErrorPolicy(policy => policy.WaitAndRetryAsync(3,_=> TimeSpan.FromSeconds(2)))
+    .AddTransientHttpErrorPolicy(policy=>policy.CircuitBreakerAsync(3,TimeSpan.FromSeconds(50)));
 
 builder.Services.AddHttpClient<ICatelogService, CatelogService>(c =>
 c.BaseAddress = new Uri(builder.Configuration["ApiSettings:CatalogUrl"]))

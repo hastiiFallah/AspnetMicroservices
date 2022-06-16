@@ -7,6 +7,7 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["BlazorApp/BlazorApp1/BlazorApp1.csproj", "BlazorApp/BlazorApp1/"]
+COPY ["BuildingBlocks/CommonLogging/CommonLogging.csproj", "BuildingBlocks/CommonLogging/"]
 RUN dotnet restore "BlazorApp/BlazorApp1/BlazorApp1.csproj"
 COPY . .
 WORKDIR "/src/BlazorApp/BlazorApp1"

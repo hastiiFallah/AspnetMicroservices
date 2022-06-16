@@ -7,6 +7,7 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["services/Discount/DiscountGrpc/DiscountGrpc.csproj", "services/Discount/DiscountGrpc/"]
+COPY ["BuildingBlocks/CommonLogging/CommonLogging.csproj", "BuildingBlocks/CommonLogging/"]
 RUN dotnet restore "services/Discount/DiscountGrpc/DiscountGrpc.csproj"
 COPY . .
 WORKDIR "/src/services/Discount/DiscountGrpc"
