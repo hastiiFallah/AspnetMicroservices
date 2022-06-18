@@ -2,6 +2,7 @@ using CommonLogging;
 using Serilog;
 using Shopping.Aggregator.Services;
 using Polly;
+using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 Host.CreateDefaultBuilder(args)
@@ -15,21 +16,50 @@ builder.Services.AddTransient<LoggingDelegatingHandler>();
 builder.Services.AddHttpClient<IBasketService, BasketService>(c =>
 c.BaseAddress = new Uri(builder.Configuration["ApiSettings:BasketUrl"]))
     .AddHttpMessageHandler<LoggingDelegatingHandler>()
-    .AddTransientHttpErrorPolicy(policy => policy.WaitAndRetryAsync(3,_=> TimeSpan.FromSeconds(2)))
-    .AddTransientHttpErrorPolicy(policy=>policy.CircuitBreakerAsync(3,TimeSpan.FromSeconds(50)));
+    .AddPolicyHandler(RetryPolicy())
+    .AddPolicyHandler(CircuteBreaker());
 
 builder.Services.AddHttpClient<ICatelogService, CatelogService>(c =>
 c.BaseAddress = new Uri(builder.Configuration["ApiSettings:CatalogUrl"]))
-    .AddHttpMessageHandler<LoggingDelegatingHandler>();
+    .AddHttpMessageHandler<LoggingDelegatingHandler>()
+    .AddPolicyHandler(RetryPolicy())
+    .AddPolicyHandler(CircuteBreaker());
 
 builder.Services.AddHttpClient<IOrderService, OrderService>(c =>
 c.BaseAddress = new Uri(builder.Configuration["ApiSettings:OrderingUrl"]))
-    .AddHttpMessageHandler<LoggingDelegatingHandler>();
+    .AddHttpMessageHandler<LoggingDelegatingHandler>()
+    .AddPolicyHandler(RetryPolicy())
+    .AddPolicyHandler(CircuteBreaker());
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+static IAsyncPolicy<HttpResponseMessage> RetryPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(
+           retryCount: 5,
+           sleepDurationProvider: retryAttemp => TimeSpan.FromSeconds(Math.Pow(2, retryAttemp)),
+           onRetry: (exeption, retrycount, context) =>
+           {
+               Log.Error($"Retry {retrycount} of {context.PolicyKey} at {context.OperationKey} failed due {exeption.Exception}");
+           });
+
+}
+
+static IAsyncPolicy<HttpResponseMessage> CircuteBreaker()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .CircuitBreakerAsync(
+           handledEventsAllowedBeforeBreaking: 5,
+           durationOfBreak:  TimeSpan.FromSeconds(30)
+          );
+
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

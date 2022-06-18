@@ -6,7 +6,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Polly;
+using Polly.Extensions.Http;
+using Serilog;
 using System;
+using System.Net.Http;
 
 namespace AspnetRunBasics
 {
@@ -25,17 +29,45 @@ namespace AspnetRunBasics
             services.AddTransient<LoggingDelegatingHandler>();
             services.AddHttpClient<ICatelogService, CatalogService>(c =>
             c.BaseAddress = new Uri(Configuration["ApiSettings:GateWayAddress"]))
-                .AddHttpMessageHandler<LoggingDelegatingHandler>();
+                .AddHttpMessageHandler<LoggingDelegatingHandler>()
+                .AddPolicyHandler(RetryPolicy())
+                .AddPolicyHandler(CircuteBreaker());
 
             services.AddHttpClient<IBasketService, BasketService>(c =>
             c.BaseAddress = new Uri(Configuration["ApiSettings:GateWayAddress"]))
-                .AddHttpMessageHandler<LoggingDelegatingHandler>();
+                .AddHttpMessageHandler<LoggingDelegatingHandler>()
+                 .AddPolicyHandler(RetryPolicy())
+                .AddPolicyHandler(CircuteBreaker());
 
             services.AddHttpClient<IOrderService, OrderService>(c =>
             c.BaseAddress = new Uri(Configuration["ApiSettings:GateWayAddress"]))
-                .AddHttpMessageHandler<LoggingDelegatingHandler>();
+                .AddHttpMessageHandler<LoggingDelegatingHandler>()
+                 .AddPolicyHandler(RetryPolicy())
+                .AddPolicyHandler(CircuteBreaker());
 
             services.AddRazorPages();
+        }
+        private static IAsyncPolicy<HttpResponseMessage> RetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(
+                retryCount: 5,
+                sleepDurationProvider: retryattampt => TimeSpan.FromSeconds(Math.Pow(2, retryattampt)),
+                onRetry: (retryCount, exeption, context) =>
+                {
+                    Log.Error($"Retry {retryCount} of {context.PolicyKey} at {context.OperationKey} failed due {exeption}");
+                });
+        }
+
+        private static IAsyncPolicy<HttpResponseMessage> CircuteBreaker()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .CircuitBreakerAsync(
+                handledEventsAllowedBeforeBreaking: 5,
+                durationOfBreak: TimeSpan.FromSeconds(2)
+                );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

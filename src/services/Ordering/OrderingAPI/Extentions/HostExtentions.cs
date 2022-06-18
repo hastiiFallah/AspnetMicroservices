@@ -1,15 +1,16 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 
 namespace OrderingAPI.Extentions
 {
     public static class HostExtentions
     {
         public static IHost MigrateDatabase<TContext>(this IHost host,
-                                            Action<TContext, IServiceProvider> seeder,
-                                            int? retry = 0) where TContext : DbContext
+                                            Action<TContext, IServiceProvider> seeder
+                                            ) where TContext : DbContext
         {
-            int retryForAvailability = retry.Value;
+            
 
             using (var scope = host.Services.CreateScope())
             {
@@ -20,21 +21,24 @@ namespace OrderingAPI.Extentions
                 try
                 {
                     logger.LogInformation("Migrating database associated with context {DbContextName}", typeof(TContext).Name);
+                    var retry = Policy.Handle<SqlException>()
+                        .WaitAndRetry(
+                        retryCount: 5,
+                        sleepDurationProvider: retryAttempt=>TimeSpan.FromSeconds(Math.Pow(2,retryAttempt)),
+                         onRetry: (retryCount, exeption, context) =>
+                         {
+                             logger.LogError($"Retry {retryCount} of {context.PolicyKey} at {context.OperationKey} failed due {exeption}");
+                         });
 
-                    InvokeSeeder(seeder, context, services);
+                    retry.Execute(() => InvokeSeeder(seeder, context, services));
+
+                    
 
                     logger.LogInformation("Migrated database associated with context {DbContextName}", typeof(TContext).Name);
                 }
                 catch (SqlException ex)
                 {
                     logger.LogError(ex, "An error occurred while migrating the database used on context {DbContextName}", typeof(TContext).Name);
-
-                    if (retryForAvailability < 50)
-                    {
-                        retryForAvailability++;
-                        System.Threading.Thread.Sleep(2000);
-                        MigrateDatabase<TContext>(host, seeder, retryForAvailability);
-                    }
                 }
             }
             return host;
