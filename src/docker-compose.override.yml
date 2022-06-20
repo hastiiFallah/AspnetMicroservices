@@ -208,3 +208,15 @@ services:
     ports:
       - "8007:80"
 
+
+  identityserver:
+    container_name: identityserver
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - "ConnectionStrings:IdentityServerConnectionString=Server=identityserverdb;Port=3306;Database=IdentityServerDb;User Id=root;Password=Abcd1234;"
+      - "ElasticConfiguration:Uri=http://elasticsearch:9200"
+    depends_on:
+    - identityserverdb
+    ports:
+      - "8015:80"
+

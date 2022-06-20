@@ -1,4 +1,7 @@
 using DiscountAPI.Repository;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 
 namespace WebApplication1
@@ -20,6 +23,9 @@ namespace WebApplication1
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApplication1", Version = "v1" });
             });
             services.AddScoped<IDiscountRepo, DiscountRepo>();
+            services.AddHealthChecks()
+           .AddNpgSql(Configuration["CacheSettings:connectionstring"]);
+  
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -39,6 +45,11 @@ namespace WebApplication1
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/hc",new HealthCheckOptions()
+                {
+                    Predicate=_=>true,
+                    ResponseWriter=UIResponseWriter.WriteHealthCheckUIResponse
+                });
             });
         }
     }

@@ -19,6 +19,12 @@ services:
   pgadmin:
     image: dpage/pgadmin4
 
+  identityserverdb:
+    image: mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+
   portainer:
     image: portainer/portainer-ce
 
@@ -82,13 +88,21 @@ services:
       context: .
       dockerfile: BlazorApp/BlazorApp1/Dockerfile
 
+  identityserver:
+    image: ${DOCKER_REGISTRY-}identityserver
+    build:
+      context: .
+      dockerfile: Security/IdentityServer/Dockerfile
+
 volumes:
   mongo_data:
   portainer_data:
   postgres_data:
   pgadmin_data:
+  mysql_data:
   elastiksearch_data:
           
+
 
 
 
