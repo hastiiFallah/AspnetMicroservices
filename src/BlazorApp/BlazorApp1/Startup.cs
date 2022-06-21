@@ -1,12 +1,9 @@
 
 using AspnetRunBasicBlazor.Services;
 using CommonLogging;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace AspnetRunBasics
 {
@@ -35,6 +32,9 @@ namespace AspnetRunBasics
             c.BaseAddress = new Uri(Configuration["ApiSettings:GateWayAddress"]))
                 .AddHttpMessageHandler<LoggingDelegatingHandler>();
 
+            services.AddHealthChecks()
+                 .AddUrlGroup(new Uri($"{Configuration["ApiSettings:GateWayAddress"]}"), "OcelotGW Health", HealthStatus.Degraded);
+
             services.AddRazorPages();
         }
 
@@ -62,6 +62,11 @@ namespace AspnetRunBasics
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
+                endpoints.MapHealthChecks("/hc", new HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                });
             });
         }
     }

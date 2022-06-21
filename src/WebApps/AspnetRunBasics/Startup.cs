@@ -1,10 +1,13 @@
 
 using AspnetRunBasics.Services;
 using CommonLogging;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Polly;
 using Polly.Extensions.Http;
@@ -26,6 +29,9 @@ namespace AspnetRunBasics
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHealthChecks()
+                .AddUrlGroup(new Uri($"{Configuration["ApiSettings:GateWayAddress"]}"), "Ocelot GW Health", HealthStatus.Degraded);
+
             services.AddTransient<LoggingDelegatingHandler>();
             services.AddHttpClient<ICatelogService, CatalogService>(c =>
             c.BaseAddress = new Uri(Configuration["ApiSettings:GateWayAddress"]))
@@ -94,6 +100,11 @@ namespace AspnetRunBasics
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
+                endpoints.MapHealthChecks("/hc",new HealthCheckOptions()
+                {
+                    Predicate=_=>true,
+                    ResponseWriter=UIResponseWriter.WriteHealthCheckUIResponse
+                });
             });
         }
     }

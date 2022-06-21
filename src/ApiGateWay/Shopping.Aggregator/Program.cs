@@ -3,6 +3,9 @@ using Serilog;
 using Shopping.Aggregator.Services;
 using Polly;
 using Polly.Extensions.Http;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 Host.CreateDefaultBuilder(args)
@@ -12,6 +15,12 @@ Host.CreateDefaultBuilder(args)
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<LoggingDelegatingHandler>();
+
+builder.Services.AddHealthChecks()
+    .AddUrlGroup(new Uri($"{builder.Configuration["ApiSettings:BasketUrl"]}/swagger/index.html"), "BasketApi", HealthStatus.Degraded)
+    .AddUrlGroup(new Uri($"{builder.Configuration["ApiSettings:CatalogUrl"]}/swagger/index.html"), "CatelogApi", HealthStatus.Degraded)
+    .AddUrlGroup(new Uri($"{builder.Configuration["ApiSettings:OrderingUrl"]}/swagger/index.html"), "OrderApi", HealthStatus.Degraded);
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddHttpClient<IBasketService, BasketService>(c =>
 c.BaseAddress = new Uri(builder.Configuration["ApiSettings:BasketUrl"]))
@@ -70,5 +79,10 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/hc",new HealthCheckOptions()
+{
+    Predicate=_=>true,
+    ResponseWriter=UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();

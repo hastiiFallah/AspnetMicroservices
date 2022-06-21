@@ -1,7 +1,9 @@
 using CommonLogging;
 using EventBus.Messages.Common;
 using EventBus.Messages.Events;
+using HealthChecks.UI.Client;
 using MassTransit;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using OrderingAPI.EventBusConsumer;
 using OrderingAPI.Extentions;
 using OrderingApplication;
@@ -20,12 +22,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(configuration);
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<OrderContext>();
 builder.Services.AddMassTransit(config =>
 {
     config.AddConsumer<BasketCheckoutConsumer>();
     config.UsingRabbitMq((ctx, cfg) =>
     {
         cfg.Host(configuration["EventBusSetting:HostService"]);
+
         cfg.ReceiveEndpoint(EventBusConstans.CheckOutQueue, c =>
         {
             c.ConfigureConsumer<BasketCheckoutConsumer>(ctx);
@@ -55,5 +60,10 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/hc",new HealthCheckOptions()
+{
+    Predicate=_=>true,
+    ResponseWriter=UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();
